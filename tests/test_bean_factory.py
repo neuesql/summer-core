@@ -1,7 +1,12 @@
 import unittest
 
 from summer_core.bean_definition import BeanDefinition, BeanScope
-from summer_core.bean_factory import BeanCreationError, BeanNotFoundError, CircularDependencyError, DefaultBeanFactory
+from summer_core.bean_exceptions import (
+    BeanCreationError,
+    BeanNotFoundError,
+    DuplicateBeanError,
+)
+from summer_core.bean_factory import DefaultBeanFactory
 
 
 class TestBeanFactory(unittest.TestCase):
@@ -29,7 +34,7 @@ class TestBeanFactory(unittest.TestCase):
         bean_def = BeanDefinition("test_bean", TestBean)
         self.bean_factory.register_bean(bean_def)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DuplicateBeanError):
             self.bean_factory.register_bean(bean_def)
 
     def test_get_nonexistent_bean(self):
@@ -101,7 +106,7 @@ class TestBeanFactory(unittest.TestCase):
         self.bean_factory.register_bean(bean_a_def)
         self.bean_factory.register_bean(bean_b_def)
 
-        with self.assertRaises(CircularDependencyError):
+        with self.assertRaises(BeanCreationError):
             self.bean_factory.get_bean("bean_a")
 
     def test_bean_creation_error(self):

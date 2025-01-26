@@ -2,24 +2,12 @@ from abc import ABC, abstractmethod
 from typing import Any, Optional
 
 from summer_core.bean_definition import BeanDefinition, BeanScope
-
-
-class BeanCreationError(Exception):
-    """Exception raised when there is an error creating a bean."""
-
-    pass
-
-
-class BeanNotFoundError(Exception):
-    """Exception raised when a requested bean is not found."""
-
-    pass
-
-
-class CircularDependencyError(Exception):
-    """Exception raised when a circular dependency is detected."""
-
-    pass
+from summer_core.bean_exceptions import (
+    BeanCreationError,
+    BeanNotFoundError,
+    CircularDependencyError,
+    DuplicateBeanError,
+)
 
 
 class BeanFactory(ABC):
@@ -86,7 +74,7 @@ class DefaultBeanFactory(BeanFactory):
             ValueError: If a bean with the same name is already registered.
         """
         if bean_definition.name in self._bean_definitions:
-            raise ValueError(f"Bean with name '{bean_definition.name}' is already registered")
+            raise DuplicateBeanError(f"Bean with name '{bean_definition.name}' is already registered")
         self._bean_definitions[bean_definition.name] = bean_definition
 
     def get_bean(self, name: str, creating_stack: Optional[set[str]] = None) -> Any:
@@ -127,7 +115,10 @@ class DefaultBeanFactory(BeanFactory):
             # Resolve dependencies
             dependencies = {}
             for dep_name, _ in bean_def.dependencies.items():
-                dependencies[dep_name] = self.get_bean(dep_name, creating_stack)
+                try:
+                    dependencies[dep_name] = self.get_bean(dep_name, creating_stack)
+                except BeanNotFoundError as e:
+                    raise BeanCreationError(f"Required dependency '{dep_name}' for bean '{name}' not found") from e
 
             # Create instance
             instance = bean_def.bean_class(**dependencies)
@@ -135,9 +126,9 @@ class DefaultBeanFactory(BeanFactory):
             # Cache singleton instance
             if bean_def.scope == BeanScope.SINGLETON:
                 self._singleton_instances[name] = instance
+                return instance
             else:
                 return instance
-
         except Exception as e:
             raise BeanCreationError(f"Error creating bean '{name}': {e!s}") from e
         finally:
