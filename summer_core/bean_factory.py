@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
 from typing import Any, Optional
 
+from summer_core.abs_bean_factory import BeanFactory
+from summer_core.abs_bean_register import BeanRegisterMixin
 from summer_core.bean_definition import BeanDefinition, BeanScope
 from summer_core.bean_exceptions import (
     BeanCreationError,
@@ -10,44 +11,7 @@ from summer_core.bean_exceptions import (
 )
 
 
-class BeanFactory(ABC):
-    """Abstract base class for bean factories.
-
-    This class defines the core interface for managing beans and their dependencies.
-    Concrete implementations should handle bean registration, creation, and dependency resolution.
-    """
-
-    @abstractmethod
-    def register_bean(self, bean_definition: BeanDefinition) -> None:
-        """Register a new bean definition.
-
-        Args:
-            bean_definition: The bean definition to register.
-
-        Raises:
-            ValueError: If a bean with the same name is already registered.
-        """
-        pass
-
-    @abstractmethod
-    def get_bean(self, name: str) -> Any:
-        """Get a bean instance by name.
-
-        Args:
-            name: The name of the bean to retrieve.
-
-        Returns:
-            An instance of the requested bean.
-
-        Raises:
-            BeanNotFoundError: If the requested bean is not registered.
-            CircularDependencyError: If a circular dependency is detected.
-            BeanCreationError: If there is an error creating the bean.
-        """
-        pass
-
-
-class DefaultBeanFactory(BeanFactory):
+class DefaultBeanFactory(BeanFactory, BeanRegisterMixin):
     """Default implementation of BeanFactory.
 
     This class is responsible for registering bean definitions, creating bean instances,
