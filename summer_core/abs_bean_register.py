@@ -4,13 +4,10 @@ from summer_core.bean_definition import BeanDefinition
 
 
 class BeanRegisterMixin(ABC):
-    """Abstract base class for bean registration.
-
-    This class defines the interface for registering beans in a container.
-    """
+    """Abstract base class for bean registration."""
 
     @abstractmethod
-    def register_bean(self, bean_definition: BeanDefinition) -> None:
+    def register_bean_definition(self, bean_definition: BeanDefinition) -> None:
         """Register a new bean definition.
 
         Args:

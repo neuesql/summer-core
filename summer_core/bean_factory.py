@@ -28,14 +28,14 @@ class DefaultBeanFactory(BeanFactory, BeanRegisterMixin):
         self._bean_definitions: dict[str, BeanDefinition] = {}
         self._singleton_instances: dict[str, Any] = {}
 
-    def register_bean(self, bean_definition: BeanDefinition) -> None:
+    def register_bean_definition(self, bean_definition: BeanDefinition) -> None:
         """Register a new bean definition.
 
         Args:
             bean_definition: The bean definition to register.
 
         Raises:
-            ValueError: If a bean with the same name is already registered.
+            DuplicateBeanError: If a bean with the same name is already registered.
         """
         if bean_definition.name in self._bean_definitions:
             raise DuplicateBeanError(f"Bean with name '{bean_definition.name}' is already registered")
