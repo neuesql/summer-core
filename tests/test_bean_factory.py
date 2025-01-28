@@ -1,18 +1,18 @@
 import unittest
 
+from summer_core.abs_bean_factory import AbstractBeanFactory
 from summer_core.bean_definition import BeanDefinition, BeanScope
 from summer_core.bean_exceptions import (
     BeanCreationError,
     BeanNotFoundError,
     DuplicateBeanError,
 )
-from summer_core.bean_factory import DefaultBeanFactory
 
 
 class TestBeanFactory(unittest.TestCase):
     def setUp(self):
         """Set up a new BeanFactory instance for each test."""
-        self.bean_factory = DefaultBeanFactory()
+        self.bean_factory = AbstractBeanFactory()
 
     def test_register_bean(self):
         """Test registering a bean definition."""
@@ -21,7 +21,7 @@ class TestBeanFactory(unittest.TestCase):
             pass
 
         bean_def = BeanDefinition("test_bean", TestBean)
-        self.bean_factory.register_bean(bean_def)
+        self.bean_factory.register_bean_definition(bean_def)
 
         self.assertIn("test_bean", self.bean_factory._bean_definitions)
 
@@ -32,10 +32,10 @@ class TestBeanFactory(unittest.TestCase):
             pass
 
         bean_def = BeanDefinition("test_bean", TestBean)
-        self.bean_factory.register_bean(bean_def)
+        self.bean_factory.register_bean_definition(bean_def)
 
         with self.assertRaises(DuplicateBeanError):
-            self.bean_factory.register_bean(bean_def)
+            self.bean_factory.register_bean_definition(bean_def)
 
     def test_get_nonexistent_bean(self):
         """Test getting a non-existent bean raises BeanNotFoundError."""
@@ -49,7 +49,7 @@ class TestBeanFactory(unittest.TestCase):
             pass
 
         bean_def = BeanDefinition("test_bean", TestBean)
-        self.bean_factory.register_bean(bean_def)
+        self.bean_factory.register_bean_definition(bean_def)
 
         instance1 = self.bean_factory.get_bean("test_bean")
         instance2 = self.bean_factory.get_bean("test_bean")
@@ -63,7 +63,7 @@ class TestBeanFactory(unittest.TestCase):
             pass
 
         bean_def = BeanDefinition("test_bean", TestBean, scope=BeanScope.PROTOTYPE)
-        self.bean_factory.register_bean(bean_def)
+        self.bean_factory.register_bean_definition(bean_def)
 
         instance1 = self.bean_factory.get_bean("test_bean")
         instance2 = self.bean_factory.get_bean("test_bean")
@@ -81,10 +81,10 @@ class TestBeanFactory(unittest.TestCase):
                 self.dependency = dependency
 
         dep_def = BeanDefinition("dependency", DependencyBean)
-        self.bean_factory.register_bean(dep_def)
+        self.bean_factory.register_bean_definition(dep_def)
 
         bean_def = BeanDefinition("test_bean", TestBean, dependencies={"dependency": DependencyBean})
-        self.bean_factory.register_bean(bean_def)
+        self.bean_factory.register_bean_definition(bean_def)
 
         instance = self.bean_factory.get_bean("test_bean")
         self.assertIsInstance(instance.dependency, DependencyBean)
@@ -103,8 +103,8 @@ class TestBeanFactory(unittest.TestCase):
         bean_a_def = BeanDefinition("bean_a", BeanA, dependencies={"bean_b": BeanB})
         bean_b_def = BeanDefinition("bean_b", BeanB, dependencies={"bean_a": BeanA})
 
-        self.bean_factory.register_bean(bean_a_def)
-        self.bean_factory.register_bean(bean_b_def)
+        self.bean_factory.register_bean_definition(bean_a_def)
+        self.bean_factory.register_bean_definition(bean_b_def)
 
         with self.assertRaises(BeanCreationError):
             self.bean_factory.get_bean("bean_a")
@@ -117,7 +117,7 @@ class TestBeanFactory(unittest.TestCase):
                 raise ValueError("Initialization failed")
 
         bean_def = BeanDefinition("failing_bean", FailingBean)
-        self.bean_factory.register_bean(bean_def)
+        self.bean_factory.register_bean_definition(bean_def)
 
         with self.assertRaises(BeanCreationError):
             self.bean_factory.get_bean("failing_bean")
