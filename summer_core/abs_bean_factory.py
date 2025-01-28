@@ -1,10 +1,9 @@
-from typing import Any, Optional
+from typing import Any
 
 from summer_core.bean_definition import BeanDefinition, BeanScope
 from summer_core.bean_exceptions import (
     BeanCreationError,
     BeanNotFoundError,
-    CircularDependencyError,
     DuplicateBeanError,
 )
 from summer_core.interface_bean_def_register import BeanDefRegisterMixin
@@ -41,19 +40,17 @@ class AbstractBeanFactory(BeanFactory, BeanDefRegisterMixin):
             raise DuplicateBeanError(f"Bean with name '{bean_definition.name}' is already registered")
         self._bean_definitions[bean_definition.name] = bean_definition
 
-    def get_bean(self, name: str, creating_stack: Optional[set[str]] = None) -> Any:
+    def get_bean(self, name: str) -> Any:
         """Get a bean instance by name.
 
         Args:
             name: The name of the bean to retrieve.
-            creating_stack: Set of beans currently being created (for circular dependency detection).
 
         Returns:
             An instance of the requested bean.
 
         Raises:
             BeanNotFoundError: If the requested bean is not registered.
-            CircularDependencyError: If a circular dependency is detected.
             BeanCreationError: If there is an error creating the bean.
         """
         if name not in self._bean_definitions:
@@ -65,28 +62,15 @@ class AbstractBeanFactory(BeanFactory, BeanDefRegisterMixin):
         if bean_def.scope == BeanScope.SINGLETON and name in self._singleton_instances:
             return self._singleton_instances[name]
 
-        # Initialize creating_stack for circular dependency detection
-        if creating_stack is None:
-            creating_stack = set()
+        instance = self.create_bean(name, bean_def)
+        return instance
 
-        # Check for circular dependencies
-        if name in creating_stack:
-            raise CircularDependencyError(f"Circular dependency detected while creating bean '{name}'")
-
-        creating_stack.add(name)
-        try:
-            instance = self.create_bean(name, bean_def, creating_stack)
-            return instance
-        finally:
-            creating_stack.remove(name)
-
-    def create_bean(self, name: str, bean_def: BeanDefinition, creating_stack: set[str]) -> Any:
+    def create_bean(self, name: str, bean_def: BeanDefinition) -> Any:
         """Create a new bean instance.
 
         Args:
             name: The name of the bean to create.
             bean_def: The bean definition.
-            creating_stack: Set of beans currently being created.
 
         Returns:
             A new instance of the bean.
@@ -100,7 +84,7 @@ class AbstractBeanFactory(BeanFactory, BeanDefRegisterMixin):
             dependencies = {}
             for dep_name, _ in bean_def.dependencies.items():
                 try:
-                    dependencies[dep_name] = self.get_bean(dep_name, creating_stack)
+                    dependencies[dep_name] = self.get_bean(dep_name)
                 except BeanNotFoundError as e:
                     raise BeanCreationError(f"Required dependency '{dep_name}' for bean '{name}' not found") from e
 

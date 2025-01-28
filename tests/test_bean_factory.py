@@ -26,7 +26,7 @@ class TestBeanFactory(unittest.TestCase):
         self.assertIn("test_bean", self.bean_factory._bean_definitions)
 
     def test_register_duplicate_bean(self):
-        """Test registering a bean with a duplicate name raises ValueError."""
+        """Test registering a bean with a duplicate name raises DuplicateBeanError."""
 
         class TestBean:
             pass
@@ -89,12 +89,11 @@ class TestBeanFactory(unittest.TestCase):
         instance = self.bean_factory.get_bean("test_bean")
         self.assertIsInstance(instance.dependency, DependencyBean)
 
-    def test_circular_dependency(self):
-        """Test circular dependency detection."""
+    def test_missing_dependency(self):
+        """Test error handling when a dependency is missing."""
 
         class BeanA:
-            def __init__(self, bean_b: "BeanB"):
-                self.bean_b = bean_b
+            pass
 
         class BeanB:
             def __init__(self, bean_a: BeanA):
