@@ -99,3 +99,68 @@ class AbstractBeanFactory(BeanFactory, BeanDefRegisterMixin):
             raise BeanCreationError(f"Error creating bean '{name}': {e!s}") from e
 
         return instance
+
+    def contains_bean(self, name: str) -> bool:
+        """Check if a bean with the given name exists.
+
+        Args:
+            name: The name of the bean to check.
+
+        Returns:
+            True if the bean exists, False otherwise.
+        """
+        return name in self._bean_definitions
+
+    def get_bean_definition(self, name: str) -> BeanDefinition:
+        """Get the bean definition for the given name.
+
+        Args:
+            name: The name of the bean definition to retrieve.
+
+        Returns:
+            The bean definition.
+
+        Raises:
+            BeanNotFoundError: If no bean definition is found with the given name.
+        """
+        if not self.contains_bean(name):
+            raise BeanNotFoundError(f"No bean definition found with name '{name}'")
+        return self._bean_definitions[name]
+
+    def is_singleton(self, name: str) -> bool:
+        """Check if the bean with the given name is a singleton.
+
+        Args:
+            name: The name of the bean to check.
+
+        Returns:
+            True if the bean is a singleton, False otherwise.
+
+        Raises:
+            BeanNotFoundError: If no bean is found with the given name.
+        """
+        bean_def = self.get_bean_definition(name)
+        return bean_def.scope == BeanScope.SINGLETON
+
+    def is_prototype(self, name: str) -> bool:
+        """Check if the bean with the given name is a prototype.
+
+        Args:
+            name: The name of the bean to check.
+
+        Returns:
+            True if the bean is a prototype, False otherwise.
+
+        Raises:
+            BeanNotFoundError: If no bean is found with the given name.
+        """
+        bean_def = self.get_bean_definition(name)
+        return bean_def.scope == BeanScope.PROTOTYPE
+
+    def get_bean_names(self) -> list[str]:
+        """Get all registered bean names.
+
+        Returns:
+            A list of registered bean names.
+        """
+        return list(self._bean_definitions.keys())

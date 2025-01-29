@@ -42,6 +42,46 @@ class TestBeanFactory(unittest.TestCase):
         with self.assertRaises(BeanNotFoundError):
             self.bean_factory.get_bean("nonexistent")
 
+    def test_get_bean_definition(self):
+        """Test getting a bean definition."""
+
+        class TestBean:
+            pass
+
+        bean_def = BeanDefinition("test_bean", TestBean)
+        self.bean_factory.register_bean_definition(bean_def)
+
+        retrieved_def = self.bean_factory.get_bean_definition("test_bean")
+        self.assertEqual(retrieved_def, bean_def)
+
+    def test_get_nonexistent_bean_definition(self):
+        """Test getting a non-existent bean definition raises BeanNotFoundError."""
+        with self.assertRaises(BeanNotFoundError):
+            self.bean_factory.get_bean_definition("nonexistent")
+
+    def test_get_bean_names(self):
+        """Test getting all registered bean names."""
+
+        class Bean1:
+            pass
+
+        class Bean2:
+            pass
+
+        bean1_def = BeanDefinition("bean1", Bean1)
+        bean2_def = BeanDefinition("bean2", Bean2)
+
+        self.bean_factory.register_bean_definition(bean1_def)
+        self.bean_factory.register_bean_definition(bean2_def)
+
+        bean_names = self.bean_factory.get_bean_names()
+        self.assertEqual(set(bean_names), {"bean1", "bean2"})
+
+    def test_get_bean_names_empty(self):
+        """Test getting bean names when no beans are registered."""
+        bean_names = self.bean_factory.get_bean_names()
+        self.assertEqual(bean_names, [])
+
     def test_get_singleton_bean(self):
         """Test getting a singleton bean returns the same instance."""
 
