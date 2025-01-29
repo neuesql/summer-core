@@ -22,107 +22,21 @@ class AbstractBeanFactory(BeanFactory, BeanDefRegisterMixin):
         _singleton_instances: Cache of singleton bean instances.
     """
 
-    def get_bean_of_type(self, required_type: type[T]) -> T:
-        """Return the bean instance that uniquely matches the given object type.
-
-        Args:
-            required_type: Type the bean must match.
-
-        Returns:
-            An instance of the single bean matching the required type.
-
-        Raises:
-            BeanNotFoundError: If no bean of the given type was found.
-            BeanCreationError: If the bean could not be created.
-        """
-        matching_beans = []
-        for name in self._bean_definitions:
-            if self.is_type_match(name, required_type):
-                matching_beans.append(name)
-
-        if not matching_beans:
-            raise BeanNotFoundError(f"No bean found of type {required_type.__name__}")
-        if len(matching_beans) > 1:
-            raise BeanCreationError(f"Found {len(matching_beans)} beans of type {required_type.__name__}, expected one")
-
-        return self.get_bean(matching_beans[0])
-
-    def is_type_match(self, name: str, type_to_match: type[Any]) -> bool:
-        """Check whether the bean with the given name matches the specified type.
-
-        Args:
-            name: The name of the bean to query.
-            type_to_match: The type to match against.
-
-        Returns:
-            True if the bean type matches.
-
-        Raises:
-            BeanNotFoundError: If there is no bean with the given name.
-        """
-        bean_type = self.get_type(name)
-        if bean_type is None:
-            return False
-        return issubclass(bean_type, type_to_match)
-
-    def get_type(self, name: str) -> Optional[type]:
-        """Determine the type of the bean with the given name.
-
-        Args:
-            name: The name of the bean to query.
-
-        Returns:
-            The type of the bean, or None if not determinable.
-
-        Raises:
-            BeanNotFoundError: If there is no bean with the given name.
-        """
-        if not self.contains_bean(name):
-            raise BeanNotFoundError(f"No bean found with name '{name}'")
-        return self._bean_definitions[name].bean_class
-
     def __init__(self):
         """Initialize an empty bean factory."""
         self._bean_definitions: dict[str, BeanDefinition] = {}
         self._singleton_instances: dict[str, Any] = {}
 
-    def register_bean_definition(self, bean_definition: BeanDefinition) -> None:
-        """Register a new bean definition.
+    def contains_bean(self, name: str) -> bool:
+        """Check if a bean with the given name exists.
 
         Args:
-            bean_definition: The bean definition to register.
-
-        Raises:
-            DuplicateBeanError: If a bean with the same name is already registered.
-        """
-        if bean_definition.name in self._bean_definitions:
-            raise DuplicateBeanError(f"Bean with name '{bean_definition.name}' is already registered")
-        self._bean_definitions[bean_definition.name] = bean_definition
-
-    def get_bean(self, name: str) -> Any:
-        """Get a bean instance by name.
-
-        Args:
-            name: The name of the bean to retrieve.
+            name: The name of the bean to check.
 
         Returns:
-            An instance of the requested bean.
-
-        Raises:
-            BeanNotFoundError: If the requested bean is not registered.
-            BeanCreationError: If there is an error creating the bean.
+            True if the bean exists, False otherwise.
         """
-        if name not in self._bean_definitions:
-            raise BeanNotFoundError(f"No bean found with name '{name}'")
-
-        bean_def = self._bean_definitions[name]
-
-        # Check for singleton instance
-        if bean_def.scope == BeanScope.SINGLETON and name in self._singleton_instances:
-            return self._singleton_instances[name]
-
-        instance = self.create_bean(name, bean_def)
-        return instance
+        return name in self._bean_definitions
 
     def create_bean(self, name: str, bean_def: BeanDefinition) -> Any:
         """Create a new bean instance.
@@ -159,16 +73,30 @@ class AbstractBeanFactory(BeanFactory, BeanDefRegisterMixin):
 
         return instance
 
-    def contains_bean(self, name: str) -> bool:
-        """Check if a bean with the given name exists.
+    def get_bean(self, name: str) -> Any:
+        """Get a bean instance by name.
 
         Args:
-            name: The name of the bean to check.
+            name: The name of the bean to retrieve.
 
         Returns:
-            True if the bean exists, False otherwise.
+            An instance of the requested bean.
+
+        Raises:
+            BeanNotFoundError: If the requested bean is not registered.
+            BeanCreationError: If there is an error creating the bean.
         """
-        return name in self._bean_definitions
+        if name not in self._bean_definitions:
+            raise BeanNotFoundError(f"No bean found with name '{name}'")
+
+        bean_def = self._bean_definitions[name]
+
+        # Check for singleton instance
+        if bean_def.scope == BeanScope.SINGLETON and name in self._singleton_instances:
+            return self._singleton_instances[name]
+
+        instance = self.create_bean(name, bean_def)
+        return instance
 
     def get_bean_definition(self, name: str) -> BeanDefinition:
         """Get the bean definition for the given name.
@@ -186,20 +114,54 @@ class AbstractBeanFactory(BeanFactory, BeanDefRegisterMixin):
             raise BeanNotFoundError(f"No bean definition found with name '{name}'")
         return self._bean_definitions[name]
 
-    def is_singleton(self, name: str) -> bool:
-        """Check if the bean with the given name is a singleton.
-
-        Args:
-            name: The name of the bean to check.
+    def get_bean_names(self) -> list[str]:
+        """Get all registered bean names.
 
         Returns:
-            True if the bean is a singleton, False otherwise.
+            A list of registered bean names.
+        """
+        return list(self._bean_definitions.keys())
+
+    def get_bean_of_type(self, required_type: type[T]) -> T:
+        """Return the bean instance that uniquely matches the given object type.
+
+        Args:
+            required_type: Type the bean must match.
+
+        Returns:
+            An instance of the single bean matching the required type.
 
         Raises:
-            BeanNotFoundError: If no bean is found with the given name.
+            BeanNotFoundError: If no bean of the given type was found.
+            BeanCreationError: If the bean could not be created.
         """
-        bean_def = self.get_bean_definition(name)
-        return bean_def.scope == BeanScope.SINGLETON
+        matching_beans = []
+        for name in self._bean_definitions:
+            if self.is_type_match(name, required_type):
+                matching_beans.append(name)
+
+        if not matching_beans:
+            raise BeanNotFoundError(f"No bean found of type {required_type.__name__}")
+        if len(matching_beans) > 1:
+            raise BeanCreationError(f"Found {len(matching_beans)} beans of type {required_type.__name__}, expected one")
+
+        return self.get_bean(matching_beans[0])
+
+    def get_type(self, name: str) -> Optional[type]:
+        """Determine the type of the bean with the given name.
+
+        Args:
+            name: The name of the bean to query.
+
+        Returns:
+            The type of the bean, or None if not determinable.
+
+        Raises:
+            BeanNotFoundError: If there is no bean with the given name.
+        """
+        if not self.contains_bean(name):
+            raise BeanNotFoundError(f"No bean found with name '{name}'")
+        return self._bean_definitions[name].bean_class
 
     def is_prototype(self, name: str) -> bool:
         """Check if the bean with the given name is a prototype.
@@ -216,10 +178,48 @@ class AbstractBeanFactory(BeanFactory, BeanDefRegisterMixin):
         bean_def = self.get_bean_definition(name)
         return bean_def.scope == BeanScope.PROTOTYPE
 
-    def get_bean_names(self) -> list[str]:
-        """Get all registered bean names.
+    def is_singleton(self, name: str) -> bool:
+        """Check if the bean with the given name is a singleton.
+
+        Args:
+            name: The name of the bean to check.
 
         Returns:
-            A list of registered bean names.
+            True if the bean is a singleton, False otherwise.
+
+        Raises:
+            BeanNotFoundError: If no bean is found with the given name.
         """
-        return list(self._bean_definitions.keys())
+        bean_def = self.get_bean_definition(name)
+        return bean_def.scope == BeanScope.SINGLETON
+
+    def is_type_match(self, name: str, type_to_match: type[Any]) -> bool:
+        """Check whether the bean with the given name matches the specified type.
+
+        Args:
+            name: The name of the bean to query.
+            type_to_match: The type to match against.
+
+        Returns:
+            True if the bean type matches.
+
+        Raises:
+            BeanNotFoundError: If there is no bean with the given name.
+        """
+        bean_type = self.get_type(name)
+        if bean_type is None:
+            return False
+        return issubclass(bean_type, type_to_match)
+
+    def register_bean_definition(self, bean_definition: BeanDefinition) -> None:
+        """Register a new bean definition.
+
+        Args:
+            bean_definition: The bean definition to register.
+
+        Raises:
+            DuplicateBeanError: If a bean with the same name is already registered.
+        """
+        if bean_definition.name in self._bean_definitions:
+            raise DuplicateBeanError(f"Bean with name '{bean_definition.name}' is already registered")
+        self._bean_definitions[bean_definition.name] = bean_definition

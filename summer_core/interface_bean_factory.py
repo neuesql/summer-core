@@ -12,6 +12,19 @@ class BeanFactory(ABC):
     """
 
     @abstractmethod
+    def contains_bean(self, name: str) -> bool:
+        """
+        Check if this bean factory contains a bean definition with the given name.
+
+        Args:
+            name: The name of the bean to query
+
+        Returns:
+            True if a bean with the given name is present
+        """
+        pass
+
+    @abstractmethod
     def get_bean(self, name: str) -> Any:
         """Get a bean instance by name.
 
@@ -46,28 +59,15 @@ class BeanFactory(ABC):
         pass
 
     @abstractmethod
-    def contains_bean(self, name: str) -> bool:
+    def get_type(self, name: str) -> Optional[type]:
         """
-        Check if this bean factory contains a bean definition with the given name.
+        Determine the type of the bean with the given name.
 
         Args:
             name: The name of the bean to query
 
         Returns:
-            True if a bean with the given name is present
-        """
-        pass
-
-    @abstractmethod
-    def is_singleton(self, name: str) -> bool:
-        """
-        Is this bean a shared singleton?
-
-        Args:
-            name: The name of the bean to query
-
-        Returns:
-            True if this bean corresponds to a singleton instance
+            The type of the bean, or None if not determinable
 
         Raises:
             NoSuchBeanDefinitionException: If there is no bean with the given name
@@ -91,6 +91,22 @@ class BeanFactory(ABC):
         pass
 
     @abstractmethod
+    def is_singleton(self, name: str) -> bool:
+        """
+        Is this bean a shared singleton?
+
+        Args:
+            name: The name of the bean to query
+
+        Returns:
+            True if this bean corresponds to a singleton instance
+
+        Raises:
+            NoSuchBeanDefinitionException: If there is no bean with the given name
+        """
+        pass
+
+    @abstractmethod
     def is_type_match(self, name: str, type_to_match: type[Any]) -> bool:
         """
         Check whether the bean with the given name matches the specified type.
@@ -101,22 +117,6 @@ class BeanFactory(ABC):
 
         Returns:
             True if the bean type matches
-
-        Raises:
-            NoSuchBeanDefinitionException: If there is no bean with the given name
-        """
-        pass
-
-    @abstractmethod
-    def get_type(self, name: str) -> Optional[type]:
-        """
-        Determine the type of the bean with the given name.
-
-        Args:
-            name: The name of the bean to query
-
-        Returns:
-            The type of the bean, or None if not determinable
 
         Raises:
             NoSuchBeanDefinitionException: If there is no bean with the given name
