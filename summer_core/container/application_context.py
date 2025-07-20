@@ -220,7 +220,8 @@ class DefaultApplicationContext(ApplicationContext):
         if not self._closed:
             self._active = False
             self._closed = True
-            # TODO: Implement proper bean destruction and resource cleanup
+            # Execute pre-destroy methods on all singleton beans
+            self._destroy_beans()
 
     def is_active(self) -> bool:
         """Determine whether this application context is active."""
@@ -239,12 +240,25 @@ class DefaultApplicationContext(ApplicationContext):
     def _perform_component_scanning(self) -> None:
         """Perform component scanning and register discovered beans."""
         from summer_core.container.component_scanner import ComponentScanner
+        from summer_core.container.configuration_processor import ConfigurationClassProcessor
         
+        # Scan for components
         scanner = ComponentScanner()
-        bean_definitions = scanner.scan_packages(self._base_packages)
+        component_bean_definitions = scanner.scan_packages(self._base_packages)
         
-        for bean_def in bean_definitions:
+        for bean_def in component_bean_definitions:
             self.register_bean_definition(bean_def.bean_name, bean_def)
+        
+        # Process configuration classes
+        config_processor = ConfigurationClassProcessor()
+        config_bean_definitions = config_processor.process_configuration_classes(self._base_packages)
+        
+        for bean_def in config_bean_definitions:
+            self.register_bean_definition(bean_def.bean_name, bean_def)
+
+    def _destroy_beans(self) -> None:
+        """Execute pre-destroy methods on all singleton beans."""
+        self._bean_factory.destroy_singletons()
 
     def _check_active(self) -> None:
         """Check if the context is active and raise an error if not."""

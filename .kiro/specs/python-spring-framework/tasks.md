@@ -50,22 +50,22 @@
     - Write tests for Java-style configuration
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 3.4 Integrate decorators with IoC container
-  - [-] 3.4.1 Implement component scanning functionality
+- [x] 3.4 Integrate decorators with IoC container
+  - [x] 3.4.1 Implement component scanning functionality
     - Create ComponentScanner class to discover @Component, @Service, @Repository classes
     - Add package scanning with configurable base packages
     - Integrate component scanning with ApplicationContext refresh
     - Write tests for component discovery and registration
     - _Requirements: 3.1, 3.2_
 
-  - [ ] 3.4.2 Implement configuration class processing
+  - [x] 3.4.2 Implement configuration class processing
     - Create ConfigurationClassProcessor to handle @Configuration classes
     - Process @Bean methods and register resulting bean definitions
     - Handle dependencies between @Bean methods
     - Write tests for configuration class processing
     - _Requirements: 3.3, 3.4_
 
-  - [ ] 3.4.3 Integrate lifecycle callbacks with container
+  - [x] 3.4.3 Integrate lifecycle callbacks with container
     - Process @PostConstruct and @PreDestroy annotations during bean lifecycle
     - Execute lifecycle methods at appropriate times during bean creation/destruction
     - Add lifecycle callback support to BeanFactory

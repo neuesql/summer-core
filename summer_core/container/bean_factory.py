@@ -236,7 +236,9 @@ class DefaultBeanFactory(BeanFactory):
         try:
             # Create the bean instance
             if bean_definition.factory_method:
-                bean_instance = bean_definition.factory_method()
+                # Resolve dependencies for factory method
+                factory_args = self._resolve_constructor_dependencies(bean_definition)
+                bean_instance = bean_definition.factory_method(*factory_args)
             else:
                 # Use constructor with dependency injection
                 constructor_args = self._resolve_constructor_dependencies(bean_definition)
@@ -252,7 +254,7 @@ class DefaultBeanFactory(BeanFactory):
             
         except Exception as e:
             from summer_core.exceptions import BeanCreationError
-            raise BeanCreationError(f"Error creating bean '{name}': {str(e)}") from e
+            raise BeanCreationError(name, str(e), e) from e
 
     def _resolve_constructor_dependencies(self, bean_definition: BeanDefinition) -> List[Any]:
         """Resolve constructor dependencies for a bean."""
@@ -296,3 +298,26 @@ class DefaultBeanFactory(BeanFactory):
             if hasattr(bean_instance, method_name):
                 method = getattr(bean_instance, method_name)
                 method()
+
+    def _execute_pre_destroy_methods(self, bean_instance: Any, bean_definition: BeanDefinition) -> None:
+        """Execute pre-destroy lifecycle methods."""
+        for method_name in bean_definition.pre_destroy_methods:
+            if hasattr(bean_instance, method_name):
+                method = getattr(bean_instance, method_name)
+                try:
+                    method()
+                except Exception as e:
+                    # Log the error but don't fail the destruction process
+                    print(f"Warning: Error executing pre-destroy method {method_name}: {e}")
+
+    def destroy_singletons(self) -> None:
+        """Destroy all singleton beans and execute their pre-destroy methods."""
+        for bean_name, bean_instance in list(self._singleton_objects.items()):
+            try:
+                bean_definition = self.get_bean_definition(bean_name)
+                self._execute_pre_destroy_methods(bean_instance, bean_definition)
+            except Exception as e:
+                print(f"Warning: Error destroying bean {bean_name}: {e}")
+        
+        # Clear the singleton cache
+        self._singleton_objects.clear()
