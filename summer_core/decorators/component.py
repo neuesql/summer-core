@@ -40,7 +40,9 @@ def Component(cls: Optional[T] = None, *, name: Optional[str] = None, scope: str
         target_class._summer_component = True
         target_class._summer_component_type = "component"
         target_class._summer_bean_name = name or _generate_bean_name(target_class)
-        target_class._summer_scope = scope
+        # Only set scope if not already set by @Scope decorator
+        if not hasattr(target_class, '_summer_scope'):
+            target_class._summer_scope = scope
         
         return target_class
     
@@ -79,7 +81,9 @@ def Service(cls: Optional[T] = None, *, name: Optional[str] = None, scope: str =
         target_class._summer_component = True
         target_class._summer_component_type = "service"
         target_class._summer_bean_name = name or _generate_bean_name(target_class)
-        target_class._summer_scope = scope
+        # Only set scope if not already set by @Scope decorator
+        if not hasattr(target_class, '_summer_scope'):
+            target_class._summer_scope = scope
         
         return target_class
     
@@ -116,7 +120,9 @@ def Repository(cls: Optional[T] = None, *, name: Optional[str] = None, scope: st
         target_class._summer_component = True
         target_class._summer_component_type = "repository"
         target_class._summer_bean_name = name or _generate_bean_name(target_class)
-        target_class._summer_scope = scope
+        # Only set scope if not already set by @Scope decorator
+        if not hasattr(target_class, '_summer_scope'):
+            target_class._summer_scope = scope
         
         return target_class
     

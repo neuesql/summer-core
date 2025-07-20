@@ -8,7 +8,8 @@ and lifecycle management within the IoC container.
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
-from summer_core.container.bean_definition import BeanDefinition
+from summer_core.container.bean_definition import BeanDefinition, BeanScope
+from summer_core.container.scope import get_scope_registry
 
 T = TypeVar('T')
 
@@ -116,6 +117,7 @@ class DefaultBeanFactory(BeanFactory):
         self._type_to_names: Dict[Type, List[str]] = {}
         self._currently_creating: set = set()
         self._dependency_resolver = None
+        self._scope_registry = get_scope_registry()
 
     def register_bean_definition(self, name: str, bean_definition: BeanDefinition) -> None:
         """
@@ -155,11 +157,16 @@ class DefaultBeanFactory(BeanFactory):
         """Return an instance of the bean registered under the given name."""
         bean_definition = self.get_bean_definition(name)
         
-        if bean_definition.is_singleton():
-            # Return cached singleton or create new one
-            if name in self._singleton_objects:
-                return self._singleton_objects[name]
-            
+        # Get the appropriate scope
+        scope_name = bean_definition.scope.value
+        scope = self._scope_registry.get_scope(scope_name)
+        
+        if not scope:
+            from summer_core.exceptions import BeanCreationError
+            raise BeanCreationError(name, f"Unknown scope: {scope_name}")
+        
+        # Use scope to get/create bean instance
+        def object_factory():
             # Check for circular dependency
             if name in self._currently_creating:
                 from summer_core.exceptions import CircularDependencyError
@@ -171,13 +178,18 @@ class DefaultBeanFactory(BeanFactory):
             try:
                 self._currently_creating.add(name)
                 bean_instance = self._create_bean(name, bean_definition)
-                self._singleton_objects[name] = bean_instance
+                
+                # Register destruction callback if bean has pre-destroy methods
+                if bean_definition.pre_destroy_methods:
+                    def destruction_callback():
+                        self._execute_pre_destroy_methods(bean_instance, bean_definition)
+                    scope.register_destruction_callback(name, destruction_callback)
+                
                 return bean_instance
             finally:
                 self._currently_creating.discard(name)
-        else:
-            # Create new prototype instance
-            return self._create_bean(name, bean_definition)
+        
+        return scope.get(name, object_factory)
 
     def get_bean_by_type(self, bean_type: Type[T]) -> T:
         """Return the bean instance that uniquely matches the given type."""
@@ -314,14 +326,10 @@ class DefaultBeanFactory(BeanFactory):
 
     def destroy_singletons(self) -> None:
         """Destroy all singleton beans and execute their pre-destroy methods."""
-        for bean_name, bean_instance in list(self._singleton_objects.items()):
-            try:
-                bean_definition = self.get_bean_definition(bean_name)
-                self._execute_pre_destroy_methods(bean_instance, bean_definition)
-            except Exception as e:
-                print(f"Warning: Error destroying bean {bean_name}: {e}")
+        # Use scope registry to destroy all scoped beans
+        self._scope_registry.destroy_all_scopes()
         
-        # Clear the singleton cache
+        # Clear the singleton cache (for backward compatibility)
         self._singleton_objects.clear()
 
     def set_dependency_resolver(self, dependency_resolver) -> None:
@@ -332,6 +340,25 @@ class DefaultBeanFactory(BeanFactory):
             dependency_resolver: The dependency resolver to use
         """
         self._dependency_resolver = dependency_resolver
+    
+    def register_scope(self, scope_name: str, scope) -> None:
+        """
+        Register a custom scope implementation.
+        
+        Args:
+            scope_name: The name of the scope
+            scope: The scope implementation
+        """
+        self._scope_registry.register_scope(scope_name, scope)
+    
+    def get_registered_scope_names(self) -> list:
+        """
+        Get the names of all registered scopes.
+        
+        Returns:
+            A list of scope names
+        """
+        return self._scope_registry.get_registered_scope_names()
 
     def validate_dependencies(self) -> None:
         """

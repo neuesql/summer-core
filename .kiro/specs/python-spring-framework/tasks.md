@@ -72,8 +72,8 @@
     - Write tests for lifecycle callback execution
     - _Requirements: 1.1, 1.2_
 
-- [ ] 4. Implement bean lifecycle management
-  - [ ] 4.1 Add bean scope support
+- [x] 4. Implement bean lifecycle management
+  - [x] 4.1 Add bean scope support
     - Implement singleton, prototype, request, and session scopes
     - Create scope registry and scope management
     - Add custom scope extension mechanism

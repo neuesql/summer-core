@@ -242,6 +242,25 @@ class DefaultApplicationContext(ApplicationContext):
             bean_definition: The bean definition to register
         """
         self._bean_factory.register_bean_definition(name, bean_definition)
+    
+    def register_scope(self, scope_name: str, scope) -> None:
+        """
+        Register a custom scope implementation.
+        
+        Args:
+            scope_name: The name of the scope
+            scope: The scope implementation
+        """
+        self._bean_factory.register_scope(scope_name, scope)
+    
+    def get_registered_scope_names(self) -> list:
+        """
+        Get the names of all registered scopes.
+        
+        Returns:
+            A list of scope names
+        """
+        return self._bean_factory.get_registered_scope_names()
 
     def _perform_component_scanning(self) -> None:
         """Perform component scanning and register discovered beans."""
