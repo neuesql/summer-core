@@ -80,7 +80,7 @@
     - Write tests for all scope types
     - _Requirements: 1.5, 1.6_
 
-  - [ ] 4.2 Implement lifecycle callbacks
+  - [x] 4.2 Implement lifecycle callbacks
     - Add @PostConstruct and @PreDestroy decorators
     - Implement InitializingBean and DisposableBean interfaces
     - Create lifecycle callback execution during bean creation/destruction

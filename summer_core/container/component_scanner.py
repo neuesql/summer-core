@@ -13,7 +13,8 @@ from typing import List, Set, Type, Optional, Dict, Any
 
 from summer_core.container.bean_definition import BeanDefinition, BeanScope, DependencyDescriptor, InjectionType
 from summer_core.decorators.component import is_component, get_component_name, get_component_scope
-from summer_core.decorators.autowired import is_autowired, PostConstruct, PreDestroy
+from summer_core.decorators.autowired import is_autowired
+from summer_core.decorators.lifecycle import get_post_construct_methods, get_pre_destroy_methods, InitializingBean, DisposableBean
 
 
 class ComponentScanner:
@@ -204,17 +205,21 @@ class ComponentScanner:
 
     def _process_lifecycle_methods(self, component_class: Type, bean_def: BeanDefinition) -> None:
         """
-        Process lifecycle methods (@PostConstruct, @PreDestroy).
+        Process lifecycle methods (@PostConstruct, @PreDestroy, InitializingBean, DisposableBean).
         
         Args:
             component_class: The component class
             bean_def: The bean definition to update
         """
-        for name, method in inspect.getmembers(component_class, inspect.isfunction):
-            if hasattr(method, '_summer_post_construct') and method._summer_post_construct:
-                bean_def.add_post_construct_method(name)
-            elif hasattr(method, '_summer_pre_destroy') and method._summer_pre_destroy:
-                bean_def.add_pre_destroy_method(name)
+        # Get post-construct methods (includes @PostConstruct and InitializingBean)
+        post_construct_methods = get_post_construct_methods(component_class)
+        for method_name in post_construct_methods:
+            bean_def.add_post_construct_method(method_name)
+        
+        # Get pre-destroy methods (includes @PreDestroy and DisposableBean)
+        pre_destroy_methods = get_pre_destroy_methods(component_class)
+        for method_name in pre_destroy_methods:
+            bean_def.add_pre_destroy_method(method_name)
 
     def get_discovered_components(self) -> Dict[str, Type]:
         """

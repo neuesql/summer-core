@@ -41,8 +41,7 @@ class TestLifecycleCallbacks(unittest.TestCase):
             
             # Create service with lifecycle methods
             lifecycle_content = '''
-from summer_core import Service
-from summer_core.decorators.autowired import PostConstruct, PreDestroy
+from summer_core import Service, PostConstruct, PreDestroy
 
 @Service
 class LifecycleService:
@@ -140,8 +139,7 @@ class MultipleLifecycleService:
             (test_package_dir / "__init__.py").write_text("")
             
             deps_lifecycle_content = '''
-from summer_core import Service, Autowired
-from summer_core.decorators.autowired import PostConstruct, PreDestroy
+from summer_core import Service, Autowired, PostConstruct, PreDestroy
 
 @Service
 class DatabaseService:
@@ -221,8 +219,7 @@ class UserService:
             (test_package_dir / "__init__.py").write_text("")
             
             config_lifecycle_content = '''
-from summer_core import Configuration, Bean
-from summer_core.decorators.autowired import PostConstruct, PreDestroy
+from summer_core import Configuration, Bean, PostConstruct, PreDestroy
 
 class ConfiguredService:
     def __init__(self, name: str):
