@@ -78,25 +78,50 @@ class DependencyGraph:
         path = []
         
         def find_cycle(node: str) -> Optional[List[str]]:
+            if node in rec_stack:
+                # Found cycle, return path from cycle start
+                cycle_start = path.index(node)
+                return path[cycle_start:] + [node]
+            
+            if node in visited:
+                return None
+            
             visited.add(node)
             rec_stack.add(node)
             path.append(node)
             
             for neighbor in self._graph[node]:
-                if neighbor not in visited:
-                    result = find_cycle(neighbor)
-                    if result:
-                        return result
-                elif neighbor in rec_stack:
-                    # Found cycle, return path from cycle start
-                    cycle_start = path.index(neighbor)
-                    return path[cycle_start:] + [neighbor]
+                result = find_cycle(neighbor)
+                if result:
+                    return result
             
             rec_stack.remove(node)
             path.pop()
             return None
         
         return find_cycle(bean_name)
+
+    def find_all_cycles(self) -> List[List[str]]:
+        """
+        Find all circular dependency cycles in the graph.
+        
+        Returns:
+            List of cycles, each represented as a list of bean names
+        """
+        visited = set()
+        cycles = []
+        
+        # Create a copy of keys to avoid dictionary changed size during iteration
+        nodes = list(self._graph.keys())
+        
+        for node in nodes:
+            if node not in visited:
+                cycle = self.get_circular_dependency_path(node)
+                if cycle:
+                    cycles.append(cycle)
+                    visited.update(cycle)
+        
+        return cycles
 
     def get_creation_order(self) -> List[str]:
         """
@@ -145,6 +170,7 @@ class DependencyResolver:
         """
         self._bean_factory = bean_factory
         self._dependency_graph = DependencyGraph()
+        self._dependency_chains: Dict[str, List[str]] = {}
 
     def resolve_dependencies(self, bean_name: str, bean_definition: BeanDefinition) -> Dict[str, Any]:
         """
@@ -278,3 +304,75 @@ class DependencyResolver:
                 return self._find_bean_name_by_type(dependency.dependency_type) is not None
         except Exception:
             return False
+
+    def detect_circular_dependencies(self) -> List[List[str]]:
+        """
+        Detect all circular dependencies in the current bean definitions.
+        
+        Returns:
+            List of circular dependency cycles, each represented as a list of bean names
+        """
+        return self._dependency_graph.find_all_cycles()
+
+    def get_dependency_chain(self, bean_name: str) -> List[str]:
+        """
+        Get the dependency chain for a given bean in creation order.
+        
+        Args:
+            bean_name: The name of the bean
+            
+        Returns:
+            List of bean names in dependency creation order
+        """
+        if bean_name in self._dependency_chains:
+            return self._dependency_chains[bean_name]
+        
+        # Build dependency chain using topological sort
+        visited = set()
+        temp_visited = set()
+        chain = []
+        
+        def visit(node: str):
+            if node in temp_visited:
+                # Circular dependency detected
+                return
+            if node in visited:
+                return
+            
+            temp_visited.add(node)
+            
+            # Visit dependencies first
+            if node in self._bean_factory._bean_definitions:
+                bean_def = self._bean_factory._bean_definitions[node]
+                for dep in bean_def.dependencies:
+                    dep_name = dep.qualifier or self._find_bean_name_by_type(dep.dependency_type)
+                    if dep_name:
+                        visit(dep_name)
+            
+            temp_visited.remove(node)
+            visited.add(node)
+            chain.append(node)
+        
+        visit(bean_name)
+        self._dependency_chains[bean_name] = chain
+        return chain
+
+    def validate_all_dependencies(self) -> None:
+        """
+        Validate all bean dependencies for circular dependencies.
+        
+        Raises:
+            CircularDependencyError: If circular dependencies are detected
+        """
+        # Build dependency graph for all beans
+        for bean_name, bean_definition in self._bean_factory._bean_definitions.items():
+            self._build_dependency_graph(bean_name, bean_definition)
+        
+        # Check for circular dependencies
+        cycles = self.detect_circular_dependencies()
+        if cycles:
+            # Report the first cycle found
+            cycle = cycles[0]
+            cycle_path = " -> ".join(cycle)
+            from summer_core.exceptions import CircularDependencyError
+            raise CircularDependencyError(cycle_path, cycle)

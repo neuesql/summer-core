@@ -115,6 +115,7 @@ class DefaultBeanFactory(BeanFactory):
         self._singleton_objects: Dict[str, Any] = {}
         self._type_to_names: Dict[Type, List[str]] = {}
         self._currently_creating: set = set()
+        self._dependency_resolver = None
 
     def register_bean_definition(self, name: str, bean_definition: BeanDefinition) -> None:
         """
@@ -147,7 +148,7 @@ class DefaultBeanFactory(BeanFactory):
         """
         if name not in self._bean_definitions:
             from summer_core.exceptions import NoSuchBeanDefinitionError
-            raise NoSuchBeanDefinitionError(f"No bean named '{name}' available")
+            raise NoSuchBeanDefinitionError(name)
         return self._bean_definitions[name]
 
     def get_bean(self, name: str) -> Any:
@@ -162,9 +163,10 @@ class DefaultBeanFactory(BeanFactory):
             # Check for circular dependency
             if name in self._currently_creating:
                 from summer_core.exceptions import CircularDependencyError
-                raise CircularDependencyError(
-                    f"Circular dependency detected for bean '{name}'"
-                )
+                # Build dependency chain for better error reporting
+                creating_list = list(self._currently_creating) + [name]
+                dependency_path = " -> ".join(creating_list)
+                raise CircularDependencyError(dependency_path, creating_list)
             
             try:
                 self._currently_creating.add(name)
@@ -321,3 +323,78 @@ class DefaultBeanFactory(BeanFactory):
         
         # Clear the singleton cache
         self._singleton_objects.clear()
+
+    def set_dependency_resolver(self, dependency_resolver) -> None:
+        """
+        Set the dependency resolver for this bean factory.
+        
+        Args:
+            dependency_resolver: The dependency resolver to use
+        """
+        self._dependency_resolver = dependency_resolver
+
+    def validate_dependencies(self) -> None:
+        """
+        Validate all bean dependencies for circular dependencies.
+        
+        Raises:
+            CircularDependencyError: If circular dependencies are detected
+        """
+        if self._dependency_resolver:
+            self._dependency_resolver.validate_all_dependencies()
+        else:
+            # Fallback validation without dependency resolver
+            self._validate_dependencies_fallback()
+
+    def _validate_dependencies_fallback(self) -> None:
+        """
+        Fallback dependency validation without dependency resolver.
+        
+        Raises:
+            CircularDependencyError: If circular dependencies are detected
+        """
+        # Simple circular dependency detection using DFS
+        visited = set()
+        rec_stack = set()
+        
+        def has_cycle(bean_name: str) -> Optional[List[str]]:
+            if bean_name in rec_stack:
+                return [bean_name]
+            if bean_name in visited:
+                return None
+            
+            visited.add(bean_name)
+            rec_stack.add(bean_name)
+            
+            if bean_name in self._bean_definitions:
+                bean_def = self._bean_definitions[bean_name]
+                for dep in bean_def.dependencies:
+                    dep_name = dep.qualifier
+                    if not dep_name:
+                        # Find bean name by type
+                        for name, definition in self._bean_definitions.items():
+                            if definition.bean_type == dep.dependency_type:
+                                dep_name = name
+                                break
+                    
+                    if dep_name:
+                        cycle = has_cycle(dep_name)
+                        if cycle:
+                            if bean_name in cycle:
+                                # Complete the cycle
+                                cycle_start = cycle.index(bean_name)
+                                return cycle[cycle_start:] + [bean_name]
+                            else:
+                                cycle.append(bean_name)
+                                return cycle
+            
+            rec_stack.remove(bean_name)
+            return None
+        
+        for bean_name in self._bean_definitions.keys():
+            if bean_name not in visited:
+                cycle = has_cycle(bean_name)
+                if cycle:
+                    cycle_path = " -> ".join(cycle)
+                    from summer_core.exceptions import CircularDependencyError
+                    raise CircularDependencyError(cycle_path, cycle)

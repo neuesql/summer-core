@@ -158,8 +158,11 @@ class DefaultApplicationContext(ApplicationContext):
             base_packages: List of packages to scan for components
         """
         from summer_core.container.bean_factory import DefaultBeanFactory
+        from summer_core.container.dependency_resolver import DependencyResolver
         
         self._bean_factory = DefaultBeanFactory()
+        self._dependency_resolver = DependencyResolver(self._bean_factory)
+        self._bean_factory.set_dependency_resolver(self._dependency_resolver)
         self._active = False
         self._closed = False
         self._base_packages = base_packages or []
@@ -209,6 +212,9 @@ class DefaultApplicationContext(ApplicationContext):
             # Perform component scanning if base packages are configured
             if hasattr(self, '_base_packages') and self._base_packages:
                 self._perform_component_scanning()
+            
+            # Validate dependencies for circular dependency detection
+            self._bean_factory.validate_dependencies()
             
             self._active = True
         except Exception as e:

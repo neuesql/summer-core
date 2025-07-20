@@ -5,6 +5,8 @@ Defines all framework-specific exceptions with detailed error messages
 and resolution suggestions.
 """
 
+from typing import List
+
 
 class SummerFrameworkError(Exception):
     """Base exception for all Summer framework errors."""
@@ -41,12 +43,13 @@ class BeanCreationError(SummerFrameworkError):
 class CircularDependencyError(SummerFrameworkError):
     """Raised when circular dependencies are detected."""
     
-    def __init__(self, dependency_path: str):
+    def __init__(self, dependency_path: str, cycle_beans: List[str] = None):
         """
         Initialize the circular dependency error.
         
         Args:
-            dependency_path: The circular dependency path
+            dependency_path: The circular dependency path as a string
+            cycle_beans: List of bean names involved in the cycle
         """
         message = (
             f"Circular dependency detected: {dependency_path}. "
@@ -54,6 +57,7 @@ class CircularDependencyError(SummerFrameworkError):
         )
         super().__init__(message)
         self.dependency_path = dependency_path
+        self.cycle_beans = cycle_beans or []
 
 
 class NoSuchBeanDefinitionError(SummerFrameworkError):
