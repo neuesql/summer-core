@@ -94,22 +94,22 @@
     - Write tests for circular dependency scenarios
     - _Requirements: 1.4, 1.5_
 
-- [ ] 5. Implement AOP framework foundation
-  - [ ] 5.1 Create aspect and advice decorators
+- [x] 5. Implement AOP framework foundation
+  - [x] 5.1 Create aspect and advice decorators
     - Implement @aspect, @pointcut, @before, @after, @around decorators
     - Create advice metadata collection and storage
     - Add pointcut expression parsing (basic implementation)
     - Write tests for aspect definition
     - _Requirements: 4.1, 4.2, 4.3_
 
-  - [ ] 5.2 Implement proxy factory and method interception
+  - [x] 5.2 Implement proxy factory and method interception
     - Create ProxyFactory for generating proxies
     - Implement method interception using Python's dynamic features
     - Add JoinPoint and ProceedingJoinPoint classes
     - Write tests for proxy creation and method interception
     - _Requirements: 4.4, 4.5, 4.6_
 
-  - [ ] 5.3 Integrate AOP with IoC container
+  - [x] 5.3 Integrate AOP with IoC container
     - Add automatic proxy creation for beans with aspects
     - Implement aspect ordering and precedence
     - Create advisor chain execution

@@ -9,6 +9,9 @@ from summer_core.decorators.component import Component, Service, Repository, Con
 from summer_core.decorators.autowired import Autowired, Bean, Value, Qualifier
 from summer_core.decorators.lifecycle import PostConstruct, PreDestroy, InitializingBean, DisposableBean
 from summer_core.decorators.scope import Scope
+from summer_core.decorators.aspect import (
+    aspect, pointcut, before, after, after_returning, after_throwing, around
+)
 
 __all__ = [
     "Component",
@@ -24,4 +27,12 @@ __all__ = [
     "InitializingBean",
     "DisposableBean",
     "Scope",
+    # AOP decorators
+    "aspect",
+    "pointcut", 
+    "before",
+    "after",
+    "after_returning",
+    "after_throwing",
+    "around",
 ]

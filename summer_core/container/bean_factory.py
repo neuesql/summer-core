@@ -14,6 +14,45 @@ from summer_core.container.scope import get_scope_registry
 T = TypeVar('T')
 
 
+class BeanPostProcessor(ABC):
+    """
+    Factory hook that allows for custom modification of new bean instances.
+    
+    Bean post processors operate on bean instances after they have been created
+    and configured, allowing for custom initialization logic and proxy creation.
+    """
+    
+    @abstractmethod
+    def post_process_before_initialization(self, bean: Any, bean_name: str) -> Any:
+        """
+        Apply this processor to the given new bean instance before any bean
+        initialization callbacks.
+        
+        Args:
+            bean: The new bean instance
+            bean_name: The name of the bean
+            
+        Returns:
+            The bean instance to use (either the original or a wrapped one)
+        """
+        pass
+    
+    @abstractmethod
+    def post_process_after_initialization(self, bean: Any, bean_name: str) -> Any:
+        """
+        Apply this processor to the given new bean instance after any bean
+        initialization callbacks.
+        
+        Args:
+            bean: The new bean instance
+            bean_name: The name of the bean
+            
+        Returns:
+            The bean instance to use (either the original or a wrapped one)
+        """
+        pass
+
+
 class BeanFactory(ABC):
     """
     The root interface for accessing a Summer IoC container.
@@ -118,6 +157,7 @@ class DefaultBeanFactory(BeanFactory):
         self._currently_creating: set = set()
         self._dependency_resolver = None
         self._scope_registry = get_scope_registry()
+        self._bean_post_processors: List[BeanPostProcessor] = []
 
     def register_bean_definition(self, name: str, bean_definition: BeanDefinition) -> None:
         """
@@ -235,6 +275,25 @@ class DefaultBeanFactory(BeanFactory):
     def get_bean_definition_names(self) -> List[str]:
         """Return the names of all beans defined in this factory."""
         return list(self._bean_definitions.keys())
+    
+    def add_bean_post_processor(self, processor: BeanPostProcessor) -> None:
+        """
+        Add a BeanPostProcessor that will get applied to beans created by this factory.
+        
+        Args:
+            processor: The bean post processor to add
+        """
+        self._bean_post_processors.append(processor)
+    
+    def get_bean_post_processors(self) -> List[BeanPostProcessor]:
+        """
+        Return the list of BeanPostProcessors that will get applied to beans
+        created with this factory.
+        
+        Returns:
+            List of bean post processors
+        """
+        return self._bean_post_processors.copy()
 
     def _create_bean(self, name: str, bean_definition: BeanDefinition) -> Any:
         """
@@ -261,8 +320,14 @@ class DefaultBeanFactory(BeanFactory):
             # Perform dependency injection
             self._inject_dependencies(bean_instance, bean_definition)
             
+            # Apply bean post processors before initialization
+            bean_instance = self._apply_bean_post_processors_before_initialization(bean_instance, name)
+            
             # Execute post-construct methods
             self._execute_post_construct_methods(bean_instance, bean_definition)
+            
+            # Apply bean post processors after initialization
+            bean_instance = self._apply_bean_post_processors_after_initialization(bean_instance, name)
             
             return bean_instance
             
@@ -425,3 +490,35 @@ class DefaultBeanFactory(BeanFactory):
                     cycle_path = " -> ".join(cycle)
                     from summer_core.exceptions import CircularDependencyError
                     raise CircularDependencyError(cycle_path, cycle)
+    
+    def _apply_bean_post_processors_before_initialization(self, bean: Any, bean_name: str) -> Any:
+        """
+        Apply all registered BeanPostProcessors before initialization.
+        
+        Args:
+            bean: The bean instance
+            bean_name: The name of the bean
+            
+        Returns:
+            The processed bean instance
+        """
+        result = bean
+        for processor in self._bean_post_processors:
+            result = processor.post_process_before_initialization(result, bean_name)
+        return result
+    
+    def _apply_bean_post_processors_after_initialization(self, bean: Any, bean_name: str) -> Any:
+        """
+        Apply all registered BeanPostProcessors after initialization.
+        
+        Args:
+            bean: The bean instance
+            bean_name: The name of the bean
+            
+        Returns:
+            The processed bean instance
+        """
+        result = bean
+        for processor in self._bean_post_processors:
+            result = processor.post_process_after_initialization(result, bean_name)
+        return result
