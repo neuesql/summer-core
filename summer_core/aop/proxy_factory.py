@@ -203,7 +203,7 @@ class ProxyFactory:
         for aspect_metadata in aspects:
             for advice_metadata in aspect_metadata.advice_methods:
                 # Check each method of the target class
-                for method_name, method in inspect.getmembers(target_class, inspect.isfunction):
+                for method_name, method in inspect.getmembers(target_class, predicate=lambda x: inspect.isfunction(x) or inspect.ismethod(x)):
                     if self._advice_applies_to_method(advice_metadata, target, method):
                         applicable_advice[method_name].append(advice_metadata)
         

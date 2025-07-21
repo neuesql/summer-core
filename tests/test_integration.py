@@ -102,6 +102,11 @@ class TestAopIntegration(unittest.TestCase):
         from summer_core.aop.advice import _aspect_registry
         _aspect_registry.clear()
         
+        # Clear the global scope registry to avoid test interference
+        from summer_core.container.scope import get_scope_registry
+        scope_registry = get_scope_registry()
+        scope_registry.destroy_all_scopes()
+        
         self.bean_factory = DefaultBeanFactory()
         self.aop_processor = create_aop_bean_post_processor()
         self.bean_factory.add_bean_post_processor(self.aop_processor)
@@ -158,8 +163,10 @@ class TestAopIntegration(unittest.TestCase):
         self.bean_factory.register_bean_definition("testService", bean_def)
         
         # Mock pointcut matching to return True for business_method
-        with patch('summer_core.aop.integration.matches_pointcut') as mock_matches:
-            mock_matches.side_effect = lambda pointcut, target, method: method.__name__ == "business_method"
+        with patch('summer_core.aop.integration.matches_pointcut') as mock_matches_integration, \
+             patch('summer_core.aop.proxy_factory.matches_pointcut') as mock_matches_proxy:
+            mock_matches_integration.side_effect = lambda pointcut, target, method: method.__name__ == "business_method"
+            mock_matches_proxy.side_effect = lambda pointcut, target, method: method.__name__ == "business_method"
             
             # Get bean - should be proxied
             service = self.bean_factory.get_bean("testService")
@@ -230,6 +237,19 @@ class TestAopIntegration(unittest.TestCase):
 
 
 class TestBeanPostProcessor(unittest.TestCase):
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        # Clear singleton scope to ensure test isolation
+        from summer_core.container.scope import get_scope_registry
+        scope_registry = get_scope_registry()
+        singleton_scope = scope_registry.get_scope("singleton")
+        if singleton_scope and hasattr(singleton_scope, 'destroy'):
+            singleton_scope.destroy()
+        # Clear the global scope registry to avoid test interference
+        from summer_core.container.scope import get_scope_registry
+        scope_registry = get_scope_registry()
+        scope_registry.destroy_all_scopes()
     
     def test_custom_bean_post_processor(self):
         """Test custom bean post processor functionality."""

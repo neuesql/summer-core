@@ -52,10 +52,8 @@ class AopBeanPostProcessor:
         Returns:
             The bean instance to use (either the original or a wrapped one)
         """
-        # Check if bean needs AOP proxy
         if self._should_create_proxy(bean, bean_name):
             return self._create_proxy(bean, bean_name)
-        
         return bean
     
     def _should_create_proxy(self, bean: Any, bean_name: str) -> bool:
@@ -107,7 +105,7 @@ class AopBeanPostProcessor:
             for advice_metadata in aspect_metadata.advice_methods:
                 # Check each method of the bean class
                 import inspect
-                for method_name, method in inspect.getmembers(bean.__class__, inspect.isfunction):
+                for method_name, method in inspect.getmembers(bean.__class__, predicate=lambda x: inspect.isfunction(x) or inspect.ismethod(x)):
                     if self._advice_applies_to_method(advice_metadata, bean, method):
                         applicable_advice[method_name].append(advice_metadata)
         
