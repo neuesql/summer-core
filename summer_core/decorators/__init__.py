@@ -12,6 +12,7 @@ from summer_core.decorators.scope import Scope
 from summer_core.decorators.aspect import (
     aspect, pointcut, before, after, after_returning, after_throwing, around
 )
+from summer_core.decorators.async_decorator import Async
 
 __all__ = [
     "Component",
@@ -35,4 +36,6 @@ __all__ = [
     "after_returning",
     "after_throwing",
     "around",
+    # Async decorator
+    "Async",
 ]

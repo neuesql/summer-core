@@ -85,6 +85,18 @@ class SingletonScope(Scope):
         if name not in self._objects:
             self._objects[name] = object_factory()
         return self._objects[name]
+        
+    def contains(self, name: str) -> bool:
+        """
+        Check if a bean exists in this scope.
+        
+        Args:
+            name: The name of the bean
+            
+        Returns:
+            True if the bean exists in this scope, False otherwise
+        """
+        return name in self._objects
     
     def remove(self, name: str) -> Optional[Any]:
         """Remove a singleton bean."""

@@ -138,15 +138,15 @@
     - Write integration tests for transactional aspects
     - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 7. Implement event system
-  - [ ] 7.1 Create application event framework
+- [x] 7. Implement event system
+  - [x] 7.1 Create application event framework
     - Implement ApplicationEvent base class
     - Create ApplicationEventPublisher interface
     - Add event publishing and listener registration
     - Write tests for event publishing and listening
     - _Requirements: 7.1, 7.2, 7.3_
 
-  - [ ] 7.2 Implement @EventListener decorator
+  - [x] 7.2 Implement @EventListener decorator
     - Create @EventListener decorator for method-based event handling
     - Add event type filtering and conditional processing
     - Implement asynchronous event processing with @Async

@@ -396,6 +396,31 @@ class DefaultBeanFactory(BeanFactory):
         
         # Clear the singleton cache (for backward compatibility)
         self._singleton_objects.clear()
+        
+    def is_bean_created(self, name: str) -> bool:
+        """
+        Check if a bean has already been created.
+        
+        Args:
+            name: The name of the bean
+            
+        Returns:
+            True if the bean has already been created, False otherwise
+        """
+        # Check if the bean definition exists
+        if name not in self._bean_definitions:
+            return False
+            
+        bean_definition = self._bean_definitions[name]
+        
+        # For singleton beans, check if they're in the singleton scope
+        if bean_definition.is_singleton():
+            scope = self._scope_registry.get_scope("singleton")
+            return scope.contains(name)
+            
+        # For non-singleton beans, we can't know if they've been created
+        # since they're not cached, so we assume they haven't been
+        return False
 
     def set_dependency_resolver(self, dependency_resolver) -> None:
         """
