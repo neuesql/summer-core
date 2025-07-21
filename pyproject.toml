@@ -6,6 +6,9 @@ authors = [{ name = "Qunfei Wu", email = "wu.qunfei@gmail.com" }]
 readme = "README.md"
 keywords = ['python']
 requires-python = ">=3.9,<4.0"
+dependencies = [
+    "tomli>=2.0.0; python_version < '3.11'"
+]
 classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python",
@@ -35,6 +38,7 @@ dev = [
     "mkdocs>=1.4.2",
     "mkdocs-material>=8.5.10",
     "mkdocstrings[python]>=0.26.1",
+    "pyyaml>=6.0",
 ]
 
 [build-system]

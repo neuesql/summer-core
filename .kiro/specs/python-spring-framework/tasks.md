@@ -153,17 +153,17 @@
     - Write tests for event listener functionality
     - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 8. Implement resource loading system
-  - [ ] 8.1 Create resource abstraction layer
+- [x] 8. Implement resource loading system
+  - [x] 8.1 Create resource abstraction layer
     - Implement Resource interface and implementations
     - Create ResourceLoader for different resource types
     - Add pattern-based resource matching
     - Write tests for resource loading
     - _Requirements: 8.1, 8.2, 8.3_
 
-  - [ ] 8.2 Add configuration file loading
-    - Implement properties file loading with environment overrides
+  - [x] 8.2 Add configuration file loading
     - Add YAML configuration support
+    - Add TOML configuration support
     - Create property placeholder resolution
     - Write tests for configuration loading
     - _Requirements: 8.4, 8.5, 8.6_
