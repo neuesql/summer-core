@@ -1,42 +1,90 @@
-site_name: summer-core
+site_name: Summer Core Framework
 repo_url: https://github.com/neuesql/summer-core
 site_url: https://neuesql.github.io/summer-core
-site_description: A python framework makes simple, modren, productive for Data and AI Application.
+site_description: A Python implementation of Spring Framework concepts for Data and AI Applications
 site_author: Qunfei Wu
 edit_uri: edit/main/docs/
 repo_name: neuesql/summer-core
 copyright: Maintained by <a href="https://neuesql.com">neuesql</a>.
 
-nav:
-  - Home: index.md
-  - Modules: modules.md
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
 plugins:
   - search
   - mkdocstrings:
       handlers:
         python:
           paths: ["summer_core"]
-theme:
-  name: material
-  feature:
-    tabs: true
-  palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: white
-      accent: deep orange
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: black
-      accent: deep orange
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-  icon:
-    repo: fontawesome/brands/github
+          selection:
+            docstring_style: google
+          rendering:
+            show_source: true
+            show_if_no_docstring: false
+            heading_level: 3
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.snippets
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Overview:
+    - Introduction: overview/introduction.md
+    - Getting Started: overview/getting-started.md
+    - Architecture: overview/architecture.md
+  - Core Container:
+    - IoC Container: core/ioc.md
+    - Beans: core/beans.md
+    - Context: core/context.md
+  - AOP:
+    - Introduction: aop/introduction.md
+    - Usage: aop/usage.md
+  - Event System:
+    - Introduction: event/introduction.md
+    - Usage: event/usage.md
+  - Data Access:
+    - Repositories: data/repositories.md
+  - Integration:
+    - Overview: integration/overview.md
+  - Testing:
+    - Overview: testing/overview.md
+  - API Reference:
+    - Modules: api-reference/modules.md
 
 extra:
   social:
@@ -44,9 +92,3 @@ extra:
       link: https://github.com/neuesql/summer-core
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/summer-core
-
-markdown_extensions:
-  - toc:
-      permalink: true
-  - pymdownx.arithmatex:
-      generic: true

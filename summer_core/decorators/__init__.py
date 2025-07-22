@@ -13,6 +13,10 @@ from summer_core.decorators.aspect import (
     aspect, pointcut, before, after, after_returning, after_throwing, around
 )
 from summer_core.decorators.async_decorator import Async
+from summer_core.decorators.transactional import (
+    transactional, Transactional, TransactionalConfig,
+    is_transactional, get_transactional_config, get_transactional_interceptor
+)
 
 __all__ = [
     "Component",
@@ -38,4 +42,11 @@ __all__ = [
     "around",
     # Async decorator
     "Async",
+    # Transaction decorators
+    "transactional",
+    "Transactional",
+    "TransactionalConfig",
+    "is_transactional",
+    "get_transactional_config",
+    "get_transactional_interceptor",
 ]

@@ -120,7 +120,7 @@ class ConfigurationError(SummerFrameworkError):
         self.config_source = config_source
 
 
-class TransactionError(SummerFrameworkError):
+class TransactionException(SummerFrameworkError):
     """Raised when transaction-related errors occur."""
     
     def __init__(self, message: str, cause: Exception = None):
@@ -132,6 +132,9 @@ class TransactionError(SummerFrameworkError):
             cause: The underlying cause of the error
         """
         super().__init__(message, cause)
+
+# Alias for backward compatibility
+TransactionError = TransactionException
 
 
 class AspectError(SummerFrameworkError):

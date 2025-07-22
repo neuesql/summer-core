@@ -117,14 +117,14 @@
     - _Requirements: 4.7_
 
 - [ ] 6. Implement transaction management system
-  - [ ] 6.1 Create transaction manager interfaces and implementations
+  - [x] 6.1 Create transaction manager interfaces and implementations
     - Implement TransactionManager interface
     - Create basic database transaction manager
     - Add transaction status tracking
     - Write tests for transaction manager
     - _Requirements: 5.1, 5.2, 5.3_
 
-  - [ ] 6.2 Implement @transactional decorator
+  - [x] 6.2 Implement @transactional decorator
     - Create @transactional decorator with all configuration options
     - Add transaction propagation behavior implementation
     - Implement isolation levels and timeout support
